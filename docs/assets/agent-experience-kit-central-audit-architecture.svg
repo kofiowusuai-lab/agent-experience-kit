@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="430" viewBox="0 0 860 430" role="img" aria-labelledby="title description">
+  <title id="title">Agent Experience Kit central audit architecture</title>
+  <desc id="description">Agent task checkpoints enter a transactional local outbox. Explicit sync sends metadata to a scoped ingestion API, which stores PostgreSQL audit history. The team dashboard reads this history and appends human reviews back to PostgreSQL.</desc>
+  <metadata>Agent Experience Kit. Publisher: Kedolabs, https://kedolabs.com. Copyright 2026 Kofi Owusu / Kedolabs. MIT licence.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#356dd6"/></marker>
+  </defs>
+  <rect width="860" height="430" rx="16" fill="#f1f5f9"/>
+  <g font-family="Arial, Helvetica, sans-serif" fill="#162c43">
+    <text x="32" y="36" font-size="19" font-weight="700">Central agent audit architecture</text>
+    <text x="32" y="58" font-size="12" fill="#52677e">Agent Experience Kit · Kedolabs</text>
+    <g fill="#ffffff" stroke="#b8c8dc" stroke-width="1.5">
+      <rect x="32" y="90" width="224" height="74" rx="8"/>
+      <rect x="318" y="90" width="224" height="74" rx="8"/>
+      <rect x="604" y="90" width="224" height="74" rx="8"/>
+      <rect x="604" y="254" width="224" height="74" rx="8"/>
+      <rect x="318" y="254" width="224" height="74" rx="8"/>
+      <rect x="32" y="254" width="224" height="74" rx="8"/>
+    </g>
+    <g font-size="16" font-weight="700" text-anchor="middle">
+      <text x="144" y="120">Agent checkpoints</text>
+      <text x="430" y="120">Local outbox</text>
+      <text x="716" y="120">Ingestion API</text>
+      <text x="716" y="284">PostgreSQL</text>
+      <text x="430" y="284">Team dashboard</text>
+      <text x="144" y="284">Human reviews</text>
+    </g>
+    <g font-size="12" text-anchor="middle" fill="#52677e">
+      <text x="144" y="143">Durable task state</text>
+      <text x="430" y="143">Transactional event queue</text>
+      <text x="716" y="143">Scoped credentials</text>
+      <text x="716" y="307">Central audit history</text>
+      <text x="430" y="307">Runs, QA and failure patterns</text>
+      <text x="144" y="307">Append-only decisions</text>
+      <text x="573" y="78">Explicit sync</text>
+      <text x="430" y="394">Reviews are stored in the same audit database</text>
+    </g>
+  </g>
+  <g fill="none" stroke="#356dd6" stroke-width="2" marker-end="url(#arrow)">
+    <path d="M256 127H310"/>
+    <path d="M542 127H596"/>
+    <path d="M716 164V246"/>
+    <path d="M604 291H550"/>
+    <path d="M318 291H264"/>
+    <path d="M144 328V366H716V336"/>
+  </g>
+</svg>

@@ -2,15 +2,9 @@
 
 The v0.2 dashboard preview extends the existing local kit. One hub collects scoped, agent-reported metadata across machines. PostgreSQL is the central store; local SQLite remains the offline checkpoint and delivery queue. No private history is imported automatically.
 
-```mermaid
-flowchart LR
-  A[Agent task checkpoints] --> B[Transactional local outbox]
-  B -->|Explicit bounded sync| C[Scoped ingestion API]
-  C --> D[(PostgreSQL audit history)]
-  D --> E[Team dashboard]
-  E --> F[Append-only human reviews]
-  F --> D
-```
+![Agent Experience Kit architecture: local checkpoints and outbox sync to a scoped API, PostgreSQL audit history, team dashboard and append-only human reviews.](assets/agent-experience-kit-central-audit-architecture.svg)
+
+Text fallback: **Agent checkpoints → local outbox → scoped ingestion API → PostgreSQL audit history → team dashboard → human reviews.** Reviews are appended back to PostgreSQL.
 
 ## Docker
 
