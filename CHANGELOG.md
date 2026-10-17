@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — dashboard preview (unreleased)
+## 0.2.0 — central dashboard alpha
 
 - Optional central PostgreSQL audit API and React dashboard.
 - Organization/team-scoped keys, expiring browser sessions and append-only human reviews.
