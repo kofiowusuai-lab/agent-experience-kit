@@ -4,7 +4,12 @@ import json
 import os
 import stat
 import sqlite3
+import uuid
+from datetime import datetime, timezone
+
+from .qa import evaluate_review
 from contextlib import contextmanager
+from functools import wraps
 from pathlib import Path
 
 
@@ -95,6 +100,37 @@ def _evidence(paths):
     return result
 
 
+def _audit_gate(operation):
+    """Persist a normalized rejection only after the operation has rolled back."""
+    @wraps(operation)
+    def audited(self, run_id, step_id, origin, *args, **kwargs):
+        try:
+            return operation(self, run_id, step_id, origin, *args, **kwargs)
+        except ValueError as error:
+            codes = {
+                'required checks must pass': 'checks_failed',
+                'checks must map names to booleans': 'invalid_checks',
+                'insufficient artifacts': 'insufficient_artifacts',
+                'dependencies must be complete': 'dependencies_incomplete',
+                'approval required': 'approval_required',
+                'attempt budget exhausted': 'attempt_budget_exhausted',
+                'completed evidence differs': 'evidence_conflict',
+                'completed step cannot fail': 'completed_step',
+            }
+            # Do not publish operations attributed to another local origin.
+            try:
+                with self._transaction():
+                    contract, steps = self._load(run_id)
+                    if origin == contract['origin']:
+                        self._queue_event(contract, steps, 'gate_rejected',
+                                          failure_code=codes.get(str(error), 'gate_rejected'))
+            except (ValueError, sqlite3.Error):
+                # Rejection auditing must preserve the original business error.
+                pass
+            raise
+    return audited
+
+
 class Store:
     """SQLite-backed runs; each operation serializes writers before reading."""
     def __init__(self, path):
@@ -102,6 +138,12 @@ class Store:
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         self.connection = sqlite3.connect(path, timeout=30, isolation_level=None)
         self.connection.execute('CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY, contract TEXT NOT NULL, snapshot TEXT NOT NULL)')
+        self.connection.execute('CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
+        self.connection.execute('CREATE TABLE IF NOT EXISTS outbox (sequence INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE NOT NULL, run_id TEXT NOT NULL, payload TEXT NOT NULL, delivered INTEGER NOT NULL DEFAULT 0)')
+        with self._transaction():
+            self.connection.execute("INSERT OR IGNORE INTO metadata VALUES ('producer_id', ?)", (str(uuid.uuid4()),))
+            self.producer_id = self.connection.execute("SELECT value FROM metadata WHERE key = 'producer_id'").fetchone()[0]
+
 
     def close(self):
         self.connection.close()
@@ -174,6 +216,8 @@ class Store:
             if step['id'] in invalid:
                 step.update(state='pending', artifacts=[], checks={}, approved=False)
         self._save(contract, steps)
+        if invalid:
+            self._queue_event(contract, steps, 'evidence_invalidated')
 
     @staticmethod
     def _status(contract, steps):
@@ -191,6 +235,7 @@ class Store:
             else:
                 steps = [{'id': spec['id'], 'state': 'pending', 'attempts': 0, 'approved': False, 'checks': {}, 'artifacts': [], 'reason': None} for spec in contract['steps']]
                 self.connection.execute('INSERT INTO runs VALUES (?, ?, ?)', (contract['id'], json.dumps(contract), json.dumps(steps)))
+                self._queue_event(contract, steps, 'run_started')
             return self._status(contract, steps)
 
     def status(self, run_id):
@@ -209,14 +254,18 @@ class Store:
                 return contract, steps, spec, step
         raise ValueError('unknown step')
 
+    @_audit_gate
     def approve(self, run_id, step_id, origin):
         with self._transaction():
             contract, steps, spec, step = self._target(run_id, step_id, origin)
             self._refresh(contract, steps)
-            step['approved'] = True
-            self._save(contract, steps)
+            if not step['approved']:
+                step['approved'] = True
+                self._save(contract, steps)
+                self._queue_event(contract, steps, 'step_approved')
             return self._status(contract, steps)
 
+    @_audit_gate
     def complete(self, run_id, step_id, origin, checks, artifacts):
         with self._transaction():
             contract, steps, spec, step = self._target(run_id, step_id, origin)
@@ -241,8 +290,10 @@ class Store:
                     raise ValueError('attempt budget exhausted')
                 step.update(state='done', attempts=step['attempts'] + 1, checks=checks, artifacts=evidence, reason=None)
                 self._save(contract, steps)
+                self._queue_event(contract, steps, 'step_completed')
             return self._status(contract, steps)
 
+    @_audit_gate
     def fail(self, run_id, step_id, origin, reason):
         _name(reason, 'reason')
         with self._transaction():
@@ -254,4 +305,64 @@ class Store:
                 raise ValueError('attempt budget exhausted')
             step.update(state='failed', attempts=step['attempts'] + 1, reason=reason)
             self._save(contract, steps)
+            self._queue_event(contract, steps, 'step_failed', failure_code='external_failure')
             return self._status(contract, steps)
+
+    def _queue_event(self, contract, steps, kind, **extra):
+        status = ('completed' if all(s['state'] == 'done' for s in steps) else
+                  'failed' if any(s['state'] == 'failed' for s in steps) else
+                  'running' if any(s['attempts'] for s in steps) else 'pending')
+        payload = {'status': status, 'steps': [
+            {'id': s['id'], 'state': s['state'], 'attempts': s['attempts'],
+             'approved': s['approved'], 'checks': dict(s['checks']),
+             'artifact_hashes': [a['sha256'] for a in s['artifacts']]}
+            for s in steps]}
+        payload.update(extra)
+        event = {'id': str(uuid.uuid4()), 'producer_id': self.producer_id,
+                 'run_id': contract['id'], 'kind': kind,
+                 'occurred_at': datetime.now(timezone.utc).isoformat(), 'payload': payload}
+        cursor = self.connection.execute('INSERT INTO outbox (id, run_id, payload) VALUES (?, ?, ?)',
+                                         (event['id'], contract['id'], '{}'))
+        event['sequence'] = cursor.lastrowid
+        self.connection.execute('UPDATE outbox SET payload = ? WHERE id = ?', (json.dumps(event), event['id']))
+
+    def pending_events(self, limit=100):
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError('limit must be between 1 and 100')
+        return [json.loads(row[0]) for row in self.connection.execute(
+            'SELECT payload FROM outbox WHERE delivered = 0 ORDER BY sequence LIMIT ?', (limit,))]
+
+    def ack_events(self, ids):
+        if not isinstance(ids, list) or any(not isinstance(v, str) for v in ids) or len(set(ids)) != len(ids):
+            raise ValueError('acknowledgements must be unique event ids')
+        with self._transaction():
+            for identifier in ids:
+                if self.connection.execute('SELECT 1 FROM outbox WHERE id = ?', (identifier,)).fetchone() is None:
+                    raise ValueError('unknown local event id')
+            self.connection.executemany('UPDATE outbox SET delivered = 1 WHERE id = ?', [(v,) for v in ids])
+
+    def pending_count(self):
+        return self.connection.execute('SELECT COUNT(*) FROM outbox WHERE delivered = 0').fetchone()[0]
+
+    def snapshot_existing(self):
+        with self._transaction():
+            ids = [r[0] for r in self.connection.execute(
+                'SELECT id FROM runs WHERE NOT EXISTS (SELECT 1 FROM outbox WHERE outbox.run_id = runs.id)')]
+            for run_id in ids:
+                contract, steps = self._load(run_id)
+                self._refresh(contract, steps)
+                self._queue_event(contract, steps, 'snapshot_imported')
+            return len(ids)
+
+    def record_review(self, run_id, report):
+        verdict = evaluate_review(report)
+        counts = {severity: sum(d['severity'] == severity for d in report['defects'])
+                  for severity in ('critical', 'major', 'minor')}
+        with self._transaction():
+            contract, steps = self._load(run_id)
+            self._refresh(contract, steps)
+            extra = {'qa': {'passed': verdict['passed'], 'checks': dict(report['checks']), 'defect_counts': counts}}
+            if not verdict['passed']:
+                extra['failure_code'] = 'qa_failed'
+            self._queue_event(contract, steps, 'qa_reviewed', **extra)
+        return verdict

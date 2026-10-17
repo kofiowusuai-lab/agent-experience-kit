@@ -81,6 +81,22 @@ class CLITest(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertNotIn('Traceback', result.stderr)
 
+    def test_sync_requires_environment_key(self):
+        result = self.invoke('sync', '--url', 'http://127.0.0.1:8787', '--token-env', 'AEK_TEST_ABSENT_KEY', '--db', self.db)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('AEK_TEST_ABSENT_KEY', result.stderr)
+        self.assertNotIn('Traceback', result.stderr)
+
+    def test_review_can_record_qa_without_advancing_task(self):
+        contract = self.write('task.json', {'id': 'demo', 'origin': 'local', 'steps': [{'id': 'produce'}]})
+        self.assertEqual(self.invoke('start', contract, '--db', self.db).returncode, 0)
+        report = self.write('review.json', {'builder': 'producer', 'reviewer': 'reviewer',
+            'declared_pass': True, 'required_checks': ['captions'], 'checks': {'captions': True}, 'defects': []})
+        result = self.invoke('review', report, '--run', 'demo', '--db', self.db)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(result.stdout)['passed'])
+        self.assertFalse(json.loads(self.invoke('status', 'demo', '--db', self.db).stdout)['complete'])
+
 
 if __name__ == '__main__':
     unittest.main()

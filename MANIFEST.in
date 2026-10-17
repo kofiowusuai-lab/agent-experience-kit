@@ -7,3 +7,14 @@ recursive-include playbooks *.md
 recursive-include examples *.json *.txt
 recursive-include tests *.py
 recursive-include skills *.md
+include Dockerfile
+include compose.yaml
+include .dockerignore
+include .env.example
+recursive-include dashboard *.json *.html *.ts *.tsx *.css *.md
+recursive-include dashboard/public *.txt
+include THIRD_PARTY_NOTICES.md
+prune dashboard/node_modules
+prune dashboard/dist
+prune dashboard/test-results
+prune dashboard/playwright-report

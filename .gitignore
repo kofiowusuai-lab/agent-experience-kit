@@ -10,6 +10,13 @@ dist/
 *.db-wal
 .env
 .env.*
+!.env.example
 .DS_Store
 private/
 local-evidence/
+node_modules/
+dashboard/dist/
+dashboard/playwright-report/
+dashboard/test-results/
+.worktrees/
+*.tsbuildinfo

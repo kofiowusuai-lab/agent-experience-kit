@@ -3,6 +3,7 @@
 import argparse
 from importlib import resources
 import json
+import os
 from pathlib import Path
 import sqlite3
 import sys
@@ -34,6 +35,13 @@ def parser():
             command.add_argument("--reason", required=True)
     review = commands.add_parser("review")
     review.add_argument("report")
+    review.add_argument("--run", help="Record a sanitized QA summary in this local run's outbox")
+    review.add_argument("--db", default=".aek/state.db")
+    sync = commands.add_parser("sync", help="Send one bounded metadata batch to a central hub")
+    sync.add_argument("--url", required=True, help="Hub origin, HTTPS or loopback HTTP")
+    sync.add_argument("--db", default=".aek/state.db")
+    sync.add_argument("--token-env", default="AEK_INGEST_TOKEN", help="Environment variable containing the ingest key")
+    sync.add_argument("--limit", type=int, default=100)
     evaluate = commands.add_parser("evaluate")
     evaluate.add_argument("cases", nargs="?", help="Defaults to bundled synthetic policy cases")
     lessons = commands.add_parser("lessons").add_subparsers(dest="action", required=True)
@@ -100,8 +108,25 @@ def dispatch(args):
     if args.command == "review":
         from .qa import evaluate_review
 
-        result = evaluate_review(read_json(args.report))
+        report = read_json(args.report)
+        if args.run:
+            from .store import Store
+
+            with Store(args.db) as store:
+                result = store.record_review(args.run, report)
+        else:
+            result = evaluate_review(report)
         return result, 0 if result["passed"] else 1
+    if args.command == "sync":
+        from .store import Store
+        from .sync import sync_once
+
+        token = os.environ.get(args.token_env, "").strip()
+        if not token:
+            raise ValueError(f"Set {args.token_env} to a scoped ingest key before syncing")
+        with Store(args.db) as store:
+            store.snapshot_existing()
+            return sync_once(store, args.url, token, limit=args.limit), 0
     if args.command == "evaluate":
         from .evaluations import evaluate_cases
 
