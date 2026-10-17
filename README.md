@@ -6,6 +6,12 @@ Built by [Kedolabs](https://kedolabs.com). Model-independent, MIT-licensed, Pyth
 
 This toolkit grew from operating a Telegram-based agent across creative production, software delivery and business workflows. It publishes generalized patterns and invented examples. Private conversations, customer records, credentials and raw agent history are excluded.
 
+## Central dashboard preview
+
+The optional v0.2 hub aggregates audit trails, automated QA, human review history and failure patterns across teams. It adds a PostgreSQL-backed API, a React dashboard, scoped ingest/viewer/reviewer keys and an offline transactional agent outbox. The local client still runs without server dependencies.
+
+See [self-hosting and architecture](docs/dashboard-self-hosting.md), [API contracts](docs/dashboard-api.md) and [the dashboard source](dashboard). Hosted deployment is separate; the hub does not remotely execute agents. Existing v0.1 releases remain the local-only toolkit.
+
 ## Quick start
 
 ```sh

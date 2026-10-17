@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: aek
+      POSTGRES_DB: aek
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a random URL-safe POSTGRES_PASSWORD in .env}
+    volumes:
+      - hub-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  hub:
+    build: .
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      AEK_DATABASE_URL: postgresql+psycopg://aek:${POSTGRES_PASSWORD}@postgres:5432/aek
+      AEK_PUBLIC_ORIGIN: ${AEK_PUBLIC_ORIGIN:-http://127.0.0.1:8787}
+      AEK_ALLOW_INSECURE_LOCALHOST: ${AEK_ALLOW_INSECURE_LOCALHOST:-1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  hub-postgres:

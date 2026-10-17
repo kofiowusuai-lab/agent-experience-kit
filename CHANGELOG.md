@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 — dashboard preview (unreleased)
+
+- Optional central PostgreSQL audit API and React dashboard.
+- Organization/team-scoped keys, expiring browser sessions and append-only human reviews.
+- Durable local event outbox and explicit bounded metadata synchronization.
+- SQL filters, pagination, receipt activity, QA history and normalized failure patterns.
+- Docker setup, synthetic multi-team demo and PostgreSQL/browser integration checks.
+
 ## 0.1.1
 
 - Close the corruption-test SQLite connection explicitly, allowing temporary database cleanup on Windows. Runtime behavior is unchanged.

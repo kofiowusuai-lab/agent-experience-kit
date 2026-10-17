@@ -15,3 +15,9 @@ This toolkit does not execute models, browsers, provider jobs, messaging, or pub
 The privacy detector cannot guarantee anonymization. Manual review of curated lessons remains required even when detection and export succeed. If a secret has already been exposed, revoke or rotate it through the relevant service; deleting a repository file does not revoke the secret or remove existing copies.
 
 No response-time commitment or supported-version policy is currently promised. Maintainers will assess reports according to reproducibility and impact.
+
+## Optional central hub
+
+Report organization/team isolation failures, credential or session exposure, CSRF bypasses, conflicting event acceptance, projection regressions and unsafe static-file handling privately. Agent-provided metadata is untrusted input. The hub authenticates scoped provisioned credentials; operator labels are not enterprise SSO identities.
+
+Use HTTPS for shared hosting. Loopback HTTP is an explicit development exception. Never include real API keys, cookies, connection URLs or review notes in a public reproduction. Use isolated synthetic organizations and the test database configuration. The API's append-only history does not protect against trusted database administrators; deployments must supply backup, retention and administrator controls.
