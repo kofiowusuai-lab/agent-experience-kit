@@ -1,4 +1,5 @@
 import copy
+from contextlib import closing
 import sqlite3
 import tempfile
 import unittest
@@ -158,8 +159,9 @@ class StoreTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.store.complete('run', 'build', 'local', {'tested': True}, files)
         self.assertEqual(before, self.store.status('run'))
-        with sqlite3.connect(self.path) as db:
-            db.execute("UPDATE runs SET snapshot = '{}' WHERE id = 'run'")
+        with closing(sqlite3.connect(self.path)) as db:
+            with db:
+                db.execute("UPDATE runs SET snapshot = '{}' WHERE id = 'run'")
         with self.assertRaises(ValueError):
             self.store.status('run')
 

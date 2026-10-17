@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Close the corruption-test SQLite connection explicitly, allowing temporary database cleanup on Windows. Runtime behavior is unchanged.
+
 ## 0.1.0
 
 Initial alpha release:
