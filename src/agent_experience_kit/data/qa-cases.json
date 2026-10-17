@@ -1,0 +1,205 @@
+[
+  {
+    "id": "clean",
+    "review": {
+      "builder": "builder",
+      "reviewer": "reviewer",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": true
+      },
+      "defects": []
+    },
+    "expected_pass": true
+  },
+  {
+    "id": "critical",
+    "review": {
+      "builder": "builder",
+      "reviewer": "reviewer",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": true
+      },
+      "defects": [
+        {
+          "severity": "critical",
+          "description": "Missing output"
+        }
+      ]
+    },
+    "expected_pass": false
+  },
+  {
+    "id": "major",
+    "review": {
+      "builder": "builder",
+      "reviewer": "reviewer",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": true
+      },
+      "defects": [
+        {
+          "severity": "major",
+          "description": "Wrong dimensions"
+        }
+      ]
+    },
+    "expected_pass": false
+  },
+  {
+    "id": "minor",
+    "review": {
+      "builder": "builder",
+      "reviewer": "reviewer",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": true
+      },
+      "defects": [
+        {
+          "severity": "minor",
+          "description": "Small spacing variation"
+        }
+      ]
+    },
+    "expected_pass": true
+  },
+  {
+    "id": "missing-check",
+    "review": {
+      "builder": "builder",
+      "reviewer": "reviewer",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {},
+      "defects": []
+    },
+    "expected_pass": false
+  },
+  {
+    "id": "false-check",
+    "review": {
+      "builder": "builder",
+      "reviewer": "reviewer",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": false
+      },
+      "defects": []
+    },
+    "expected_pass": false
+  },
+  {
+    "id": "self-review",
+    "review": {
+      "builder": "builder",
+      "reviewer": "builder",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": true
+      },
+      "defects": []
+    },
+    "expected_pass": false
+  },
+  {
+    "id": "missing-reviewer",
+    "review": {
+      "builder": "builder",
+      "reviewer": "",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": true
+      },
+      "defects": []
+    },
+    "expected_pass": false
+  },
+  {
+    "id": "declared-failure",
+    "review": {
+      "builder": "builder",
+      "reviewer": "reviewer",
+      "declared_pass": false,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": true
+      },
+      "defects": []
+    },
+    "expected_pass": false
+  },
+  {
+    "id": "permitted-self-review",
+    "review": {
+      "builder": "builder",
+      "reviewer": "builder",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": true
+      },
+      "defects": [],
+      "requires_independent_review": false
+    },
+    "expected_pass": true
+  },
+  {
+    "id": "empty-required-checks",
+    "review": {
+      "builder": "builder",
+      "reviewer": "reviewer",
+      "declared_pass": true,
+      "required_checks": [],
+      "checks": {},
+      "defects": []
+    },
+    "expected_pass": false
+  },
+  {
+    "id": "extra-failed-check",
+    "review": {
+      "builder": "builder",
+      "reviewer": "reviewer",
+      "declared_pass": true,
+      "required_checks": [
+        "render"
+      ],
+      "checks": {
+        "render": true,
+        "captions": false
+      },
+      "defects": []
+    },
+    "expected_pass": false
+  }
+]

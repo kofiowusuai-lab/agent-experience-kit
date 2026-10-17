@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-experience-kit"
+version = "0.1.0"
+description = "Turn agent experience into task contracts, evidence gates and regression evaluations"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Kofi Owusu"}]
+keywords = ["agents", "evaluation", "quality-assurance", "checkpoints", "hermes"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/kofiowusuai-lab/agent-experience-kit"
+Issues = "https://github.com/kofiowusuai-lab/agent-experience-kit/issues"
+
+[project.scripts]
+aek = "agent_experience_kit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+agent_experience_kit = ["data/*.json"]

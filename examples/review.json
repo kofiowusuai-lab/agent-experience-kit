@@ -1,0 +1,9 @@
+{
+  "builder": "producer",
+  "reviewer": "independent-reviewer",
+  "requires_independent_review": true,
+  "declared_pass": true,
+  "required_checks": ["artifact_exists", "content_matches_brief"],
+  "checks": {"artifact_exists": true, "content_matches_brief": true},
+  "defects": []
+}

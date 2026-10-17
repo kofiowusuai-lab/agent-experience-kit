@@ -1,0 +1,21 @@
+{
+  "id": "demo-job",
+  "origin": "local:demo",
+  "steps": [
+    {
+      "id": "produce",
+      "required_checks": ["artifact_created"]
+    },
+    {
+      "id": "verify",
+      "depends_on": ["produce"],
+      "required_checks": ["independent_review_passed"]
+    },
+    {
+      "id": "handoff",
+      "depends_on": ["verify"],
+      "required_checks": ["destination_confirmed"],
+      "requires_approval": true
+    }
+  ]
+}

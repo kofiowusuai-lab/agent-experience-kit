@@ -1,0 +1,14 @@
+{
+  "id": "synthetic-review-gate",
+  "category": "quality",
+  "failure": "A declared pass concealed a blocking defect.",
+  "correction": "Evaluate explicit checks and defect severity before accepting output.",
+  "acceptance_criteria": [
+    "Critical and major defects block acceptance.",
+    "Required checks explicitly pass."
+  ],
+  "evidence_level": "synthetic",
+  "provenance": "synthetic_example",
+  "visibility": "public",
+  "reviewed_for_public": true
+}
